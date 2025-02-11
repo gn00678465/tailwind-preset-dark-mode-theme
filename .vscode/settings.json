@@ -1,0 +1,15 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": false,
+  "unocss.root": [],
+  "deno.enable": true,
+  "editor.tabSize": 2,
+  "cSpell.words": [
+    "colord",
+    "preflights",
+    "unocss"
+  ],
+  "vue.server.hybridMode": "typeScriptPluginOnly"
+}
