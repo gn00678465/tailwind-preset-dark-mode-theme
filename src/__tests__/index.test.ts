@@ -26,19 +26,6 @@ export function run(config: Config, plugin = tailwind) {
 }
 
 describe('createPreset', () => {
-  function mockPlugin(preset: any) {
-    const plugin = preset.plugins?.[0]
-    if (!plugin?.handler) return {}
-
-    const styles: Record<string, any> = {}
-    plugin.handler({
-      addBase(baseStyles: Record<string, any>) {
-        Object.assign(styles, baseStyles)
-      }
-    })
-    return styles
-  }
-
   it('should handle basic theme colors', () => {
     const theme: Theme = {
       colors: {
@@ -52,14 +39,14 @@ describe('createPreset', () => {
 
     const preset = createPreset(theme)
 
-    run({
+    return run({
       presets: [preset],
       content: [
         {
           raw: String.raw`
           <div>
             <p class="text-primary-50"></p>
-            <p class="text-primary-100"></P>
+            <p class="text-primary-100"></p>
             <p class="text-secondary"></p>
           </div>
           `
@@ -89,16 +76,21 @@ describe('createPreset', () => {
     }
 
     const preset = createPreset(theme)
-    const baseStyles = mockPlugin(preset)
 
-    expect(baseStyles[':root']).toMatchObject({
-      'color-scheme': 'light',
-      '--tw-primary-50': '248 250 252'
-    })
-
-    expect(baseStyles['.dark']).toMatchObject({
-      'color-scheme': 'dark',
-      '--tw-primary-50': '15 23 42'
+    return run({
+      darkMode: 'class',
+      presets: [preset],
+      content: [
+        {
+          raw: String.raw`
+          <div>
+            <p class="text-primary-50 dark:text-primary-50"></p>
+          </div>
+          `
+        }
+      ]
+    }).then((result) => {
+      expect(result.css).toMatchSnapshot()
     })
   })
 
@@ -112,14 +104,21 @@ describe('createPreset', () => {
     }
 
     const preset = createPreset(theme, { prefix: 'custom' })
-    const baseStyles = mockPlugin(preset)
 
-    expect(baseStyles[':root']).toMatchObject({
-      '--custom-primary-50': '248 250 252'
+    return run({
+      presets: [preset],
+      content: [
+        {
+          raw: String.raw`
+          <div>
+            <p class="text-primary-50"></p>
+          </div>
+          `
+        }
+      ]
+    }).then((result) => {
+      expect(result.css).toMatchSnapshot()
     })
-
-    const colors = preset.theme?.extend?.colors as Record<string, any>
-    expect(colors?.primary['50']).toBe('rgba(var(--custom-primary-50) / <alpha-value>)')
   })
 
   it('should handle HSL color format', () => {
@@ -132,14 +131,21 @@ describe('createPreset', () => {
     }
 
     const preset = createPreset(theme, { colorFormat: 'hsl' })
-    const baseStyles = mockPlugin(preset)
 
-    expect(baseStyles[':root']).toMatchObject({
-      '--tw-primary-50': '210 40% 98%'
+    return run({
+      presets: [preset],
+      content: [
+        {
+          raw: String.raw`
+          <div>
+            <p class="text-primary-50"></p>
+          </div>
+          `
+        }
+      ]
+    }).then((result) => {
+      expect(result.css).toMatchSnapshot()
     })
-
-    const colors = preset.theme?.extend?.colors as Record<string, any>
-    expect(colors?.primary['50']).toBe('hsla(var(--tw-primary-50) / <alpha-value>)')
   })
 
   it('should handle single color value', () => {
@@ -150,14 +156,21 @@ describe('createPreset', () => {
     }
 
     const preset = createPreset(theme)
-    const baseStyles = mockPlugin(preset)
 
-    expect(baseStyles[':root']).toMatchObject({
-      '--tw-primary': '248 250 252'
+    return run({
+      presets: [preset],
+      content: [
+        {
+          raw: String.raw`
+          <div>
+            <p class="text-primary"></p>
+          </div>
+          `
+        }
+      ]
+    }).then((result) => {
+      expect(result.css).toMatchSnapshot()
     })
-
-    const colors = preset.theme?.extend?.colors as Record<string, any>
-    expect(colors?.primary).toBe('rgba(var(--tw-primary) / <alpha-value>)')
   })
 
   it('should throw error for invalid color', () => {
