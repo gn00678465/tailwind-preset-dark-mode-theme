@@ -57,19 +57,21 @@ describe('createPreset', () => {
     })
   })
 
-  it('should handle light/dark theme', () => {
+  it('should handle light/dark theme with class mode', () => {
     const theme: Theme = {
       light: {
         colors: {
           primary: {
-            '50': '#f8fafc'
+            '50': '#f8fafc',
+            '100': '#f1f5f9'
           }
         }
       },
       dark: {
         colors: {
           primary: {
-            '50': '#0f172a'
+            '50': '#0f172a',
+            '100': '#1e293b'
           }
         }
       }
@@ -85,6 +87,47 @@ describe('createPreset', () => {
           raw: String.raw`
           <div>
             <p class="text-primary-50 dark:text-primary-50"></p>
+            <p class="text-primary-100 dark:text-primary-100"></p>
+          </div>
+          `
+        }
+      ]
+    }).then((result) => {
+      expect(result.css).toMatchSnapshot()
+    })
+  })
+
+  it('should handle light/dark theme with media mode', () => {
+    const theme: Theme = {
+      light: {
+        colors: {
+          primary: {
+            '50': '#f8fafc',
+            '100': '#f1f5f9'
+          }
+        }
+      },
+      dark: {
+        colors: {
+          primary: {
+            '50': '#0f172a',
+            '100': '#1e293b'
+          }
+        }
+      }
+    }
+
+    const preset = createPreset(theme)
+
+    return run({
+      darkMode: 'media',
+      presets: [preset],
+      content: [
+        {
+          raw: String.raw`
+          <div>
+            <p class="text-primary-50 dark:text-primary-50"></p>
+            <p class="text-primary-100 dark:text-primary-100"></p>
           </div>
           `
         }

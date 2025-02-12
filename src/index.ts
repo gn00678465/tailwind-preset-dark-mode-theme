@@ -87,21 +87,6 @@ export function createPreset(theme: Theme, options: PresetOptions = {}): Config 
     ? processThemeColors(darkTheme, prefix, colorFormat)
     : { cssVars: {} }
 
-  const themePlugin = plugin(({ addBase }) => {
-    addBase({
-      ':root': {
-        'color-scheme': 'light',
-        ...lightVars
-      },
-      ...(Object.keys(darkVars).length > 0 ? {
-        '.dark': {
-          'color-scheme': 'dark',
-          ...darkVars
-        }
-      } : {})
-    })
-  })
-
   return {
     content: [],
     theme: {
@@ -109,6 +94,41 @@ export function createPreset(theme: Theme, options: PresetOptions = {}): Config 
         colors
       }
     },
-    plugins: [themePlugin]
+    plugins: [
+      plugin(({ addBase }) => {
+        // 淺色主題變數總是設定在 :root
+        const styles: Record<string, any> = {
+          ':root': {
+            'color-scheme': 'light',
+            ...lightVars
+          }
+        }
+
+        // 如果有深色主題,則設定深色主題變數
+        if (Object.keys(darkVars).length > 0) {
+          // 使用 :root.dark 來確保深色主題變數的優先級
+          styles[':root.dark'] = {
+            'color-scheme': 'dark',
+            ...darkVars
+          }
+
+          // 同時支援 .dark 選擇器
+          styles['.dark'] = {
+            'color-scheme': 'dark',
+            ...darkVars
+          }
+
+          // 支援 media query
+          styles['@media (prefers-color-scheme: dark)'] = {
+            ':root:not(.light)': {
+              'color-scheme': 'dark',
+              ...darkVars
+            }
+          }
+        }
+
+        addBase(styles)
+      })
+    ]
   }
 }
