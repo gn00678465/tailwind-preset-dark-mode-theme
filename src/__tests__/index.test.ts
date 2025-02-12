@@ -1,6 +1,29 @@
+import tailwind from 'tailwindcss'
+import type { Config } from 'tailwindcss'
+import postcss from 'postcss'
+import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 import { createPreset } from '../index'
 import type { Theme } from '../types'
+
+export function run(config: Config, plugin = tailwind) {
+  const { currentTestName } = expect.getState()
+
+  config = {
+    ...{
+      presets: [],
+      corePlugins: { preflight: false },
+    },
+    ...config,
+  }
+
+  return postcss(plugin(config)).process(
+    ['@tailwind base;', '@tailwind utilities'].join('\n'),
+    {
+      from: `${path.resolve(__filename)}?test=${currentTestName}`,
+    },
+  )
+}
 
 describe('createPreset', () => {
   function mockPlugin(preset: any) {
@@ -22,24 +45,28 @@ describe('createPreset', () => {
         primary: {
           '50': '#f8fafc',
           '100': '#f1f5f9'
-        }
+        },
+        secondary: "#000"
       }
     }
 
     const preset = createPreset(theme)
-    const baseStyles = mockPlugin(preset)
 
-    expect(preset.theme?.extend?.colors).toMatchObject({
-      primary: {
-        '50': 'rgba(var(--tw-primary-50) / <alpha-value>)',
-        '100': 'rgba(var(--tw-primary-100) / <alpha-value>)'
-      }
-    })
-
-    expect(baseStyles[':root']).toMatchObject({
-      'color-scheme': 'light',
-      '--tw-primary-50': '248 250 252',
-      '--tw-primary-100': '241 245 249'
+    run({
+      presets: [preset],
+      content: [
+        {
+          raw: String.raw`
+          <div>
+            <p class="text-primary-50"></p>
+            <p class="text-primary-100"></P>
+            <p class="text-secondary"></p>
+          </div>
+          `
+        }
+      ]
+    }).then((result) => {
+      expect(result.css).toMatchSnapshot()
     })
   })
 
