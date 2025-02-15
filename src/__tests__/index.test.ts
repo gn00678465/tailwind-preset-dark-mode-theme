@@ -57,7 +57,7 @@ describe('createPreset', () => {
     })
   })
 
-  it('should handle light/dark theme with class mode', () => {
+  it('should handle light/dark theme with selector mode', () => {
     const theme: Theme = {
       light: {
         colors: {
@@ -80,7 +80,49 @@ describe('createPreset', () => {
     const preset = createPreset(theme)
 
     return run({
-      darkMode: 'class',
+      darkMode: 'selector',
+      presets: [preset],
+      content: [
+        {
+          raw: String.raw`
+          <div>
+            <p class="text-primary-50 dark:text-primary-50"></p>
+            <p class="text-primary-100 dark:text-primary-100"></p>
+          </div>
+          `
+        }
+      ]
+    }).then((result) => {
+      expect(result.css).toMatchSnapshot()
+    })
+  })
+
+  it('should handle custom selector', () => {
+    const theme: Theme = {
+      light: {
+        colors: {
+          primary: {
+            '50': '#f8fafc',
+            '100': '#f1f5f9'
+          }
+        }
+      },
+      dark: {
+        colors: {
+          primary: {
+            '50': '#0f172a',
+            '100': '#1e293b'
+          }
+        }
+      }
+    }
+
+    const preset = createPreset(theme, {
+      darkSelectors: ['.dark-theme', '[data-mode="dark"]']
+    })
+
+    return run({
+      darkMode: 'selector',
       presets: [preset],
       content: [
         {
@@ -128,6 +170,45 @@ describe('createPreset', () => {
           <div>
             <p class="text-primary-50 dark:text-primary-50"></p>
             <p class="text-primary-100 dark:text-primary-100"></p>
+          </div>
+          `
+        }
+      ]
+    }).then((result) => {
+      expect(result.css).toMatchSnapshot()
+    })
+  })
+
+  it('should handle light/dark theme without darkMode config', () => {
+    const theme: Theme = {
+      light: {
+        colors: {
+          primary: {
+            '50': '#f8fafc',
+            '100': '#f1f5f9'
+          }
+        }
+      },
+      dark: {
+        colors: {
+          primary: {
+            '50': '#0f172a',
+            '100': '#1e293b'
+          }
+        }
+      }
+    }
+
+    const preset = createPreset(theme)
+
+    return run({
+      presets: [preset],
+      content: [
+        {
+          raw: String.raw`
+          <div>
+            <p class="text-primary-50"></p>
+            <p class="text-primary-100"></p>
           </div>
           `
         }

@@ -15,6 +15,12 @@ interface PresetOptions {
    * @default 'rgb'
    */
   colorFormat?: 'rgb' | 'hsl'
+  /**
+   * 深色模式選擇器
+   * @default ['.dark']
+   * @example ['.dark-theme', '[data-mode="dark"]']
+   */
+  darkSelectors?: string[]
 }
 
 /**
@@ -67,10 +73,52 @@ function processThemeColors(
 }
 
 /**
+ * 根據 darkMode 設定生成選擇器
+ */
+function getDarkModeSelectors(
+  darkMode: string | undefined,
+  customSelectors?: string[]
+): {
+  lightSelectors: string[]
+  darkSelectors: string[]
+  mediaQuery?: string
+} {
+  // 預設使用 :root 選擇器
+  const lightSelectors = [':root']
+
+  if (!darkMode) {
+    return { lightSelectors, darkSelectors: [] }
+  }
+
+  if (darkMode === 'selector') {
+    return {
+      lightSelectors,
+      // 如果有自定義選擇器則使用自定義選擇器,否則使用預設的 .dark
+      darkSelectors: customSelectors?.length ? customSelectors : ['.dark']
+    }
+  }
+
+  if (darkMode === 'media') {
+    return {
+      lightSelectors,
+      darkSelectors: [':root'],
+      mediaQuery: '@media (prefers-color-scheme: dark)'
+    }
+  }
+
+  // 如果是其他設定,則只使用淺色主題
+  return { lightSelectors, darkSelectors: [] }
+}
+
+/**
  * 建立 Tailwind CSS preset
  */
 export function createPreset(theme: Theme, options: PresetOptions = {}): Config {
-  const { prefix = 'tw', colorFormat = 'rgb' } = options
+  const {
+    prefix = 'tw',
+    colorFormat = 'rgb',
+    darkSelectors: customDarkSelectors
+  } = options
 
   let lightTheme: ThemeColors
   let darkTheme: ThemeColors | undefined
@@ -95,10 +143,13 @@ export function createPreset(theme: Theme, options: PresetOptions = {}): Config 
       }
     },
     plugins: [
-      plugin(({ addBase }) => {
-        // 淺色主題變數總是設定在 :root
+      plugin(({ addBase, config }) => {
+        const darkMode = config('darkMode', 'media') as string | undefined
+        const { lightSelectors, darkSelectors, mediaQuery } = getDarkModeSelectors(darkMode, customDarkSelectors)
+
+        // 設定淺色主題變數
         const styles: Record<string, any> = {
-          ':root': {
+          [lightSelectors.join(', ')]: {
             'color-scheme': 'light',
             ...lightVars
           }
@@ -106,21 +157,17 @@ export function createPreset(theme: Theme, options: PresetOptions = {}): Config 
 
         // 如果有深色主題,則設定深色主題變數
         if (Object.keys(darkVars).length > 0) {
-          // 使用 :root.dark 來確保深色主題變數的優先級
-          styles[':root.dark'] = {
-            'color-scheme': 'dark',
-            ...darkVars
-          }
-
-          // 同時支援 .dark 選擇器
-          styles['.dark'] = {
-            'color-scheme': 'dark',
-            ...darkVars
-          }
-
-          // 支援 media query
-          styles['@media (prefers-color-scheme: dark)'] = {
-            ':root:not(.light)': {
+          if (mediaQuery) {
+            // 使用 media query
+            styles[mediaQuery] = {
+              [darkSelectors.join(', ')]: {
+                'color-scheme': 'dark',
+                ...darkVars
+              }
+            }
+          } else if (darkSelectors.length > 0) {
+            // 使用選擇器
+            styles[darkSelectors.join(', ')] = {
               'color-scheme': 'dark',
               ...darkVars
             }
