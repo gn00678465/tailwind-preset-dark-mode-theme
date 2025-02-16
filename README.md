@@ -1,29 +1,30 @@
 # Tailwind Preset Dark Mode Theme
 
-一個用於 Tailwind CSS 的 preset,提供簡單且強大的主題顏色管理功能,支援淺色/深色模式。
+一個用於管理 Tailwind CSS 主題顏色和深色模式的 preset。
 
 ## 特點
 
-- 🎨 支援單一主題或淺色/深色主題設定
-- 🔄 自動將顏色轉換為 CSS 變數
-- 🌓 自動處理 color-scheme
-- 🎯 支援 RGB 和 HSL 顏色格式
-- 🔧 支援自定義 prefix
+- 🎨 簡單的主題顏色設定
+- 🌓 完整的深色模式支援
+- 🎯 自定義選擇器支援
+- 🔄 自動的顏色格式轉換
+- 📦 零依賴 (除了 colord)
+- 💪 完整的 TypeScript 支援
 
 ## 安裝
 
 ```bash
-# npm
+# 使用 npm
 npm install tailwind-preset-dark-mode-theme
 
-# pnpm
+# 使用 pnpm
 pnpm add tailwind-preset-dark-mode-theme
 
-# yarn
+# 使用 yarn
 yarn add tailwind-preset-dark-mode-theme
 ```
 
-## 使用方法
+## 使用方式
 
 ### 基本使用
 
@@ -35,26 +36,20 @@ const theme = {
   colors: {
     primary: {
       '50': '#f8fafc',
-      '100': '#f1f5f9',
-      '200': '#e2e8f0'
-    },
-    secondary: '#64748b'
+      '100': '#f1f5f9'
+    }
   }
 }
 
 export default {
-  presets: [
-    createPreset(theme)
-  ]
+  content: [],
+  presets: [createPreset(theme)]
 }
 ```
 
-### 淺色/深色主題
+### 深色模式支援
 
 ```typescript
-// tailwind.config.ts
-import { createPreset } from 'tailwind-preset-dark-mode-theme'
-
 const theme = {
   light: {
     colors: {
@@ -75,46 +70,82 @@ const theme = {
 }
 
 export default {
-  darkMode: 'class', // 或 'media'
+  content: [],
+  darkMode: 'selector', // 或 'media'
+  presets: [createPreset(theme)]
+}
+```
+
+### 自定義選擇器
+
+```typescript
+const theme = {
+  light: {
+    colors: {
+      primary: {
+        '50': '#f8fafc'
+      }
+    }
+  },
+  dark: {
+    colors: {
+      primary: {
+        '50': '#0f172a'
+      }
+    }
+  }
+}
+
+export default {
+  content: [],
+  darkMode: 'selector',
   presets: [
-    createPreset(theme)
+    createPreset(theme, {
+      darkSelectors: ['.dark-theme', '[data-mode="dark"]']
+    })
   ]
 }
+```
+
+HTML 使用：
+```html
+<!-- 使用 class -->
+<div class="dark-theme">
+  <p class="text-primary-50">深色主題</p>
+</div>
+
+<!-- 使用 data 屬性 -->
+<div data-mode="dark">
+  <p class="text-primary-50">深色主題</p>
+</div>
 ```
 
 ### 自定義選項
 
 ```typescript
-// tailwind.config.ts
-import { createPreset } from 'tailwind-preset-dark-mode-theme'
-
-const preset = createPreset(theme, {
-  // 自定義 CSS 變數前綴
-  prefix: 'custom', // 預設: 'tw'
+createPreset(theme, {
+  // CSS 變數前綴
+  prefix: 'custom',  // 預設: 'tw'
   
   // 顏色格式
-  colorFormat: 'hsl' // 預設: 'rgb'
+  colorFormat: 'hsl', // 預設: 'rgb'
+  
+  // 深色模式選擇器
+  darkSelectors: ['.dark-theme', '[data-mode="dark"]'] // 預設: ['.dark']
 })
 ```
 
-## 配置選項
+## API
 
-### Theme 類型
+### Theme 型別
 
 ```typescript
-// 顏色值的映射
 type Colors = Record<string, string>
-
-// 主題顏色設定
-type ThemeColors = {
-  colors: Record<string, Colors | string>
-}
-
-// 完整主題設定
+type ThemeColors = Record<'colors', Record<string, Colors | string>>
 type Theme = ThemeColors | Record<'light' | 'dark', ThemeColors>
 ```
 
-### PresetOptions 類型
+### PresetOptions 型別
 
 ```typescript
 interface PresetOptions {
@@ -123,56 +154,40 @@ interface PresetOptions {
    * @default 'tw'
    */
   prefix?: string
-
+  
   /**
    * 顏色格式
    * @default 'rgb'
    */
   colorFormat?: 'rgb' | 'hsl'
-}
-```
-
-## 輸出結果
-
-### CSS 變數
-
-```css
-:root {
-  color-scheme: light;
-  --tw-primary-50: 248 250 252;
-  --tw-primary-100: 241 245 249;
-}
-
-.dark {
-  color-scheme: dark;
-  --tw-primary-50: 15 23 42;
-  --tw-primary-100: 30 41 59;
-}
-```
-
-### Tailwind 顏色設定
-
-```javascript
-{
-  theme: {
-    extend: {
-      colors: {
-        primary: {
-          '50': 'rgba(var(--tw-primary-50) / <alpha-value>)',
-          '100': 'rgba(var(--tw-primary-100) / <alpha-value>)'
-        }
-      }
-    }
-  }
+  
+  /**
+   * 深色模式選擇器
+   * @default ['.dark']
+   */
+  darkSelectors?: string[]
 }
 ```
 
 ## 注意事項
 
-1. 確保你的 Tailwind CSS 版本 >= 3.4.0
-2. 使用深色模式時,請確保在 tailwind.config.ts 中正確設定 `darkMode` 選項
-3. 顏色值必須是有效的 CSS 顏色格式(HEX、RGB、HSL 等)
+1. 顏色值必須是有效的 CSS 顏色格式
+2. 深色模式選擇器必須是有效的 CSS 選擇器
+3. 使用 `darkSelectors` 時需要設定 `darkMode: 'selector'`
 
-## License
+## 開發
 
-ISC
+```bash
+# 安裝依賴
+pnpm install
+
+# 運行測試
+pnpm test
+
+# 建置
+pnpm build
+```
+
+## 授權
+
+MIT
